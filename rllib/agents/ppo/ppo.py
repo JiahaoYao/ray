@@ -63,6 +63,9 @@ DEFAULT_CONFIG = with_common_config({
     # Uses the sync samples optimizer instead of the multi-gpu one. This does
     # not support minibatches.
     "simple_optimizer": False,
+    # Use PyTorch as backend
+    "use_pytorch": False,
+
 })
 # __sphinx_doc_end__
 # yapf: enable
@@ -152,10 +155,19 @@ def validate_config(config):
         config["simple_optimizer"] = True  # multi-gpu not supported
 
 
+def get_policy_class(config):
+    if config["use_pytorch"]:
+        from ray.rllib.agents.pg.torch_ppo_policy import PPOTorchPolicy
+        return PPOTorchPolicy
+    else:
+        return PPOTFPolicy
+
+
 PPOTrainer = build_trainer(
     name="PPO",
     default_config=DEFAULT_CONFIG,
     default_policy=PPOTFPolicy,
+    get_policy_class=get_policy_class,
     make_policy_optimizer=choose_policy_optimizer,
     validate_config=validate_config,
     after_optimizer_step=update_kl,
